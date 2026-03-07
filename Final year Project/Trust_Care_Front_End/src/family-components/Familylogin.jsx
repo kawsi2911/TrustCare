@@ -39,7 +39,7 @@ function Familylogin(){
 
                             <button className = 'next' onClick={()=>navigate("/familyhome")} > Login </button>
 
-                            <p className='forgotpassword'><Link to = "/familyprofileedit"> Forgot Password ? </Link> </p>
+                            <p className='forgotpassword'><Link to ="/familyprofileedit"> Forgot Password ? </Link> </p>
                             <p className='account'> Dont have a account ? <Link to="/familyregister"> Register as Service Taker</Link></p>
                             
                         </div>
