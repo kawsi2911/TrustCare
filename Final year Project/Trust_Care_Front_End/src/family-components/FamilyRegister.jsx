@@ -55,7 +55,7 @@ function FamilyRegister(){
             <div className='ServiceSection'>
                 <div className='Service_container'>
 
-                    <p className='para'>Service Provider Registration (1/3)</p>
+                    <p className='para'>Service Taker Registration </p>
 
                     <div className='form'>
                         <div className='form-fill'>
