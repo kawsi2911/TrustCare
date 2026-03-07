@@ -1,18 +1,23 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import familyRoutes from "./routes/familyRoutes.js";
 
-const { connectDB } = require("./config/db");
-const userRoutes = require("./routes/userRoutes");
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-connectDB();
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
+.then(()=> console.log("MongoDB connected"))
+.catch(err=> console.log(err));
 
-app.use("/api/users",userRoutes);
+// routes
+app.use("/api/family", familyRoutes);
 
-app.listen(5000, () => {
-    console.log("server running on port 5000 ");
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
