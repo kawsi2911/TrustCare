@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from '../Header/Header.jsx';
 import { useNavigate } from "react-router-dom"; 
+import { Link } from "react-router-dom";
 
 
 function Familylogin(){
@@ -39,7 +40,7 @@ function Familylogin(){
                             <button className = 'next' onClick={()=>navigate("/familyhome")} > Login </button>
 
                             <p className='forgotpassword'><a href = ''> Forgot Password ? </a> </p>
-                            <p className='account'> Dont have a account ? <a href = ''> Register as Provider</a></p>
+                            <p className='account'> Dont have a account ? <Link to="/familyregister"> Register as Service Taker</Link></p>
                             
                         </div>
                     </div>

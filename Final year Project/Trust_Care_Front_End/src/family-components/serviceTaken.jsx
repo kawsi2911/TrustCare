@@ -31,7 +31,7 @@ function ServiceTaken(){
                             </div>
 
                             <div className = 'row'>
-                                <label htmlFor = 'confirm_password'>Confirm Passworeswrxdctfjd : <label className='star'> * </label> </label>
+                                <label htmlFor = 'confirm_password'>Confirm Password : <label className='star'> * </label> </label>
                                 <input type = 'password' id = 'confirm_password' name = 'confirm_password' placeholder = 'Re-enter password' />
                             </div>
 
