@@ -29,6 +29,8 @@ import FamilyActivity from "./Family-Dashboard/FamilyActivity.jsx";
 import MakePayment from "./Family-Dashboard/MakePayment.jsx";
 import Rate from "./Family-Dashboard/Rate.jsx";
 import FamilyProfile from "./Family-Dashboard/familyprofile.jsx";
+import ServiceProviderForget from "./Provider-Login/ServiceProviderForget.jsx";
+import ServiceProviderProfileEdit from "./Provider-Login/ServiceProvideProfileEdit.jsx";
 
 
 function App() {
@@ -57,6 +59,7 @@ function App() {
         <Route path = "/activitydashboard" element = {<ActivityDashboard/>}/>
         <Route path = "/profiledashboard" element = {<ProfileDashboard/>}/>
 
+
         {/*service taken register screen*/}
         <Route path = "/familyregister" element = {<FamilyRegister/>}/>
         
@@ -77,6 +80,8 @@ function App() {
         <Route path = "/makepayment" element = { <MakePayment/>}/>
         <Route path = "/rate" element = {<Rate/>}/>
         <Route path = "/familyprofiles" element ={<FamilyProfile/>}/>
+        <Route path = "/serviceproviderforget" element ={<ServiceProviderForget/>}/>
+        <Route path = "/serviceproviderprofileedit" element = {<ServiceProviderProfileEdit/>}/>
 
       </Routes>
       
