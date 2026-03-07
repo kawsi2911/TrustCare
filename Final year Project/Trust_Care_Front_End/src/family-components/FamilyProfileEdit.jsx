@@ -1,8 +1,7 @@
 import Header from "../Header/Header.jsx";
 import {useNavigate} from "react-router-dom";
 
-function FamilyRegister(){
-
+function FamilyProfileEdit(){
     const navigate = useNavigate();
 
     return(
@@ -11,24 +10,24 @@ function FamilyRegister(){
              <div className = 'ServiceSection'>
                 <div className = 'Service_container'>
 
-                    <p className = 'para'>Service Taker Registration </p>
+                    <p className = 'para'>Service Taker Edit Details </p>
 
                     <div className = 'form'>
                         <div className = 'form-fill'>
 
                             <div className = 'row'>
                                 <label htmlFor = 'Family-FullName'> Full Name : <label className='star'> * </label> </label>
-                                <input type = 'text' id = 'Family-FullName' name = 'Family-FullName' placeholder = 'Enter your Full Name' />
+                                <input type = 'text' disabled id = 'Family-FullName' name = 'Family-FullName' placeholder = 'Enter your Full Name' />
                             </div>
 
                             <div className = 'row'>
                                 <label htmlFor = 'Family-NIC'>NIC Number : <label className='star'> * </label> </label>
-                                <input type = 'text' id = 'Family-NIC' name = 'Family-NIC' placeholder = 'Enter the NIC (123456789V / 122344112555)' />
+                                <input type = 'text' disabled id = 'Family-NIC' name = 'Family-NIC' placeholder = 'Enter the NIC (123456789V / 122344112555)' />
                             </div>
 
                             <div className = 'row'>
                                 <label htmlFor = 'Family-Phone'>Contact Number : <label className='star'> * </label> </label>
-                                <input type = 'text' id = 'Family-Phone' name = 'Family-Phone' placeholder = '+94 77 123 4567' />
+                                <input type = 'text' disabled id = 'Family-Phone' name = 'Family-Phone' placeholder = '+94 77 123 4567' />
                             </div>
 
                             <div className = 'row'>
@@ -55,8 +54,23 @@ function FamilyRegister(){
                                 <input type = 'text' id = 'Family-City' name = 'Family-City' placeholder = 'eg . Jaffna' />
                             </div>
 
+                             <div className='row'>
+                                <label htmlFor='username'> Choose User Name : <span className='star'>*</span></label>
+                                <input type='text' disabled  id='username' name='username' placeholder='Enter your Full Name' />
+                            </div>
 
-                            <button className = 'next' onClick={() => navigate("/servicetaken")} > Next Step </button>
+                            <div className = 'row'>
+                                <label htmlFor = 'create_password'>Change Password : <label className='star'> * </label> </label>
+                                <input type = 'password' id = 'create_password' name = 'create_password' placeholder = 'Enter Strong Password' />
+                            </div>
+
+                            <div className = 'row'>
+                                <label htmlFor = 'confirm_password'>Confirm Password : <label className='star'> * </label> </label>
+                                <input type = 'password' id = 'confirm_password' name = 'confirm_password' placeholder = 'Re-enter password' />
+                            </div>
+
+
+                            <button className = 'next' onClick={() => navigate("/servicetaken")} > Completed </button>
                             
                         </div>
                     </div>
@@ -66,5 +80,4 @@ function FamilyRegister(){
     )
 }
 
-export default FamilyRegister;
-
+export default FamilyProfileEdit;

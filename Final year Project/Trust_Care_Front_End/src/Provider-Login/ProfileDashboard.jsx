@@ -77,7 +77,7 @@ function ProfileDashboard(){
                     </div>
 
                     <div className = "QServices">
-                            <button className = "viewall"> Edit Profile </button>
+                            <button className = "viewall" onClick = {()=>navigate("/serviceproviderprofileedit")}> Edit Profile </button>
                             <button className = "updates"> Update Availability </button>
                             <button className = "logouts" onClick = {()=>navigate("/")}> Logout</button>
                     </div>

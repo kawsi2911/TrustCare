@@ -1,9 +1,9 @@
 import Header from "../Header/Header";
 import { useNavigate } from "react-router-dom"; 
+import "./ServiceProviderLogin.css";
 
-
-function ServiceTaken(){
-
+function ServiceProviderForget(){
+    
     const navigate = useNavigate();
 
     return(
@@ -12,12 +12,11 @@ function ServiceTaken(){
             <div className = 'Servicelogin'>
                 <div className = "login_Container">
 
-                    <div className = "First">
-                        <p className = "Head"> ✔️Registration Complete!</p>
-                        <p className = "Body">Now Create your login credentials</p>
+                     <div className = "name">
+                        <p className = "Heads">Forget Password Credentials</p>
                     </div>
 
-                      <div className = 'form'>
+                    <div className = 'form'>
                         <div className = 'form-fill'>
 
                             <div className='row'>
@@ -35,11 +34,8 @@ function ServiceTaken(){
                                 <input type = 'password' id = 'confirm_password' name = 'confirm_password' placeholder = 'Re-enter password' />
                             </div>
 
-                            <div className = 'row'>
-                                <input type = 'checkbox' id = 'check' name = 'check'/> <p className="checked">I agree to <a href="">Terms & Conditions</a> and <a href="">Privacy Policy</a></p>
-                            </div>
 
-                            <button className = 'next' onClick = { ()=>navigate("/familylogin")}> Create Account & Login </button>
+                            <button className = 'next' onClick = { ()=>navigate("/serviceproviderloginpage")}> Submit & Login </button>
                             
                         </div>
                     </div>
@@ -48,6 +44,7 @@ function ServiceTaken(){
             </div>
         </>
     )
+
 }
 
-export default ServiceTaken;
+export default ServiceProviderForget;
