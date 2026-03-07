@@ -10,7 +10,7 @@ function FamilyProfileEdit(){
              <div className = 'ServiceSection'>
                 <div className = 'Service_container'>
 
-                    <p className = 'para'>Service Taker Registration </p>
+                    <p className = 'para'>Service Taker Edit Details </p>
 
                     <div className = 'form'>
                         <div className = 'form-fill'>
