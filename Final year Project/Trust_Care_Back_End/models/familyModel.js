@@ -1,15 +1,44 @@
-function createUser(data){
-    return{
-        fullName:data.fullName,
-        nic: data.nic,
-        contactNumber : data.contactNumber,
-        email:data.email,
-        gender:data.gender,
-        address:data,address,
-        city:data.city,
-        username:data.username,
-        password:data.password
-    };
-}
+import mongoose from "mongoose";
 
-module.exports = { createUser };
+const userSchema = new mongoose.Schema({
+  fullName: {
+    type: String,
+    required: true
+  },
+  nic: {
+    type: String,
+    required: true
+  },
+  contactNumber: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  gender: {
+    type: String,
+    required: true
+  },
+  address: {
+    type: String,
+    required: true
+  },
+  city: {
+    type: String,
+    required: true
+  },
+  username: {
+    type: String,
+    required: true
+  },
+  password: {
+    type: String,
+    required: true
+  }
+});
+
+const familyModel = mongoose.model("Family", userSchema);
+
+export default familyModel;
