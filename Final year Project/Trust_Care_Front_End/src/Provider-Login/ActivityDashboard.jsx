@@ -21,7 +21,7 @@ function ActivityDashboard(){
                         <p className = "Head"> Welcome, kawsi 👋</p>
 
                         <div className = "Logout">
-                            <button>➜] Logout</button>
+                            <button onClick = {()=>navigate("/")}>➜] Logout</button>
                         </div>
 
                     </div>
