@@ -54,8 +54,23 @@ function FamilyProfileEdit(){
                                 <input type = 'text' id = 'Family-City' name = 'Family-City' placeholder = 'eg . Jaffna' />
                             </div>
 
+                             <div className='row'>
+                                <label htmlFor='username'> Choose User Name : <span className='star'>*</span></label>
+                                <input type='text' disabled  id='username' name='username' placeholder='Enter your Full Name' />
+                            </div>
 
-                            <button className = 'next' onClick={() => navigate("/servicetaken")} > Next Step </button>
+                            <div className = 'row'>
+                                <label htmlFor = 'create_password'>Change Password : <label className='star'> * </label> </label>
+                                <input type = 'password' id = 'create_password' name = 'create_password' placeholder = 'Enter Strong Password' />
+                            </div>
+
+                            <div className = 'row'>
+                                <label htmlFor = 'confirm_password'>Confirm Password : <label className='star'> * </label> </label>
+                                <input type = 'password' id = 'confirm_password' name = 'confirm_password' placeholder = 'Re-enter password' />
+                            </div>
+
+
+                            <button className = 'next' onClick={() => navigate("/servicetaken")} > Completed </button>
                             
                         </div>
                     </div>
