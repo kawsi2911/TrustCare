@@ -74,7 +74,7 @@ function ServiceProviderDashboard(){
                             Quick Services
                         </div>
                         <div className = "QServices">
-                            <button className = "viewall"> View All Requests </button>
+                            <button className = "viewall" onClick = {()=>navigate("/notificationdashboard")}> View All Requests </button>
                             <button className = "updates"> Update Availability </button>
                         </div>
                     </div>

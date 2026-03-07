@@ -23,7 +23,7 @@ function Home(){
           {/*login button*/} 
           <div className = 'Button-group'>
             <button className = 'Login-service' onClick={()=>navigate("/serviceproviderloginpage")}>Login As a Service Provider</button>
-            <button className = 'Login-family' onClick={()=>navigate("/familylogin")}>Login As a Family / Individual</button>
+            <button className = 'Login-family' onClick={()=>navigate("/familylogin")}>Login As a Service Taker</button>
           </div>
 
           {/*Register button*/}
