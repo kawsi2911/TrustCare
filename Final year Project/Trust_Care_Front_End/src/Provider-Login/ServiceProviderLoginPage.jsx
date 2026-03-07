@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from '../Header/Header.jsx';
 import { useNavigate } from "react-router-dom"; 
+import { Link } from "react-router-dom";
 import "./ServiceProviderLoginPage.css"
 
 function ServiceProviderLoginPage(){
@@ -38,8 +39,8 @@ function ServiceProviderLoginPage(){
 
                             <button className = 'next' onClick={() => navigate ("/serviceproviderdashboard")}> Login </button>
 
-                            <p className='forgotpassword'><a href = ''> Forgot Password ? </a> </p>
-                            <p className='account'> Dont have a account ? <a href = ''> Register as Provider</a></p>
+                            <p className='forgotpassword'><Link to="/serviceproviderforget">Forgot Password?</Link></p>
+                            <p className='account'> Don't have an account? <Link to="/serviceprovider1"> Register as Provider</Link></p>
                             
                         </div>
                     </div>
