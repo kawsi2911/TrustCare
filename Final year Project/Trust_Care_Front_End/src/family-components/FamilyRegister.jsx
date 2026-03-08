@@ -1,5 +1,6 @@
 import Header from "../Header/Header.jsx";
 import { useNavigate } from "react-router-dom";
+import "./familyRegister.css";
 import { useState } from "react";
 
 function FamilyRegister(){
@@ -16,6 +17,8 @@ function FamilyRegister(){
         city:""
     });
 
+    const [errors, setErrors] = useState({});
+
     const handleChange = (e)=>{
         setFormData({
             ...formData,
@@ -23,29 +26,47 @@ function FamilyRegister(){
         });
     };
 
-    const handleNext = async ()=>{
+    const handleSubmit = (e) =>{
+        e.preventDefault = {};
 
-        try{
+        let newErros = {};
 
-            const res = await fetch("http://localhost:5000/api/family/register",{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify(formData)
-            });
-
-            const data = await res.json();
-
-            alert(data.message);
-
-            navigate("/servicetaken");
-
-        }catch(err){
-            console.log(err);
-            alert("Error submitting form");
+        if(!formData.fullName.trim()){
+            newErros.fullName = "Full Name is Required";
         }
+
+        if(!formData.nic.trim()){
+            newErros.nic = "NIC is Required";
+        }
+
+        if(!formData.contactNumber.trim()){
+            newErros.contactNumber = "Contact Number is Required";
+        }
+
+        if(!formData.email.trim()){
+            newErros.email = "Email is Required";
+        }
+
+        if(!formData.gender.trim()){
+            newErros.gender = "Gender is Selected";
+        }
+
+        if(!formData.address.trim()){
+            newErros.address = "Address is Required";
+        }
+
+        if(!formData.city.trim()){
+            newErros.city = "City is Required";
+        }
+
+        setErrors(newErros);
+
+        if(Object.keys(newErros).length === 0){
+            console.log("Form Submitted", formData);
+        }
+
     };
+
 
     return(
         <div>
@@ -68,6 +89,10 @@ function FamilyRegister(){
                                     placeholder="Enter your Full Name"
                                     onChange={handleChange}
                                 />
+                                
+                                {errors.fullName && (
+                                    <div className="error-box">{errors.fullName}</div>
+                                )}
                             </div>
 
                             <div className='row'>
@@ -150,7 +175,7 @@ function FamilyRegister(){
                                 />
                             </div>
 
-                            <button className='next' onClick={handleNext}>
+                            <button className='next' onClick={handleChange}>
                                 Next Step
                             </button>
 
