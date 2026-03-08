@@ -1,0 +1,19 @@
+.input-group{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;   /* add this */
+}
+
+.error-box{
+  position: absolute;     /* add this */
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: red;
+  background: #ffe6e6;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid red;
+  white-space: nowrap;
+}
