@@ -51,5 +51,6 @@ body {
 .header .logo {
   height: 150px;
   width: 150px;
+  cursor: pointer;
 }
 
