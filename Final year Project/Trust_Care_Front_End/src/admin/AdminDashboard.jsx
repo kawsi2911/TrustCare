@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminDashboard.css";
+import logo from "../assets/logo.png";
 
 // ─── Shared Top Bar & Nav ───────────────────────────────────────────────────
 const AdminTopBar = ({ activeTab, setActiveTab, onLogout }) => {
@@ -9,9 +10,9 @@ const AdminTopBar = ({ activeTab, setActiveTab, onLogout }) => {
     <>
       <div className="admin-topbar">
         <div className="admin-topbar-left">
-          <div className="logo-circle">🛡️</div>
-          <h1>Admin Dashboard</h1>
+          <img src={logo} alt="Trust Care Logo" className="topbar-logo" />
         </div>
+        <h1 className="topbar-title">Admin Dashboard</h1>
         <button className="logout-btn" onClick={onLogout}>
           ▶ Log Out
         </button>
@@ -113,6 +114,15 @@ const UsersTab = () => {
     },
   ];
 
+  // Filter users based on selected tab
+  const filteredUsers = users.filter((user) => {
+    if (filter === "All Users") return true;
+    if (filter === "Families") return user.type.includes("Family");
+    if (filter === "Verified") return user.status === "Active";
+    if (filter === "Pending") return user.isPending;
+    return true;
+  });
+
   return (
     <div className="admin-content">
       <div className="search-bar-wrapper">
@@ -135,37 +145,73 @@ const UsersTab = () => {
         ))}
       </div>
 
-      {users.map((user, idx) => (
-        <div className="user-card" key={idx}>
-          <div className="user-card-top">
-            <div>
-              <h4>{user.name}</h4>
-              <p>{user.type}</p>
-              <p>Email: {user.email}</p>
-              {user.joined ? (
-                <p>Joined: {user.joined} | Services: {user.services}</p>
+      {/* Show Provider Verification section when Pending tab is selected */}
+      {filter === "Pending" ? (
+        <>
+          <div className="verification-header-banner">Provider Verification</div>
+          <div className="pending-alert">
+            ⚠️ 5 providers waiting for verification
+          </div>
+          <div className="verification-card">
+            <h4>Pending Verification – Provider #789</h4>
+            <div className="provider-info-row">
+              <div className="provider-avatar">👤</div>
+              <div className="provider-details">
+                <p><strong>Name:</strong> Ravi Kumar</p>
+                <p><strong>NIC:</strong> 456789012V</p>
+                <p><strong>Contact:</strong> +94 77 999 8898</p>
+                <p><strong>Service Type:</strong> Elder Care</p>
+                <p><strong>Experience:</strong> 6 years</p>
+                <p><strong>Registered:</strong> 3 hours ago</p>
+              </div>
+            </div>
+            <div className="documents-card">
+              <h5>Uploaded Documents</h5>
+              <div className="doc-item"><span className="doc-verified">✅</span> NIC Copy – Verified</div>
+              <div className="doc-item"><span className="doc-verified">✅</span> Photo – Verified</div>
+              <div className="doc-item"><span className="doc-verified">✅</span> Certificates – Verified</div>
+              <div className="doc-item"><span className="doc-pending">⚠️</span> Police Report – Pending</div>
+            </div>
+            <label className="form-label">Verification Notes</label>
+            <textarea className="notes-textarea" placeholder="Add notes about verification..." />
+            <div className="verification-actions">
+              <button className="btn-approve">✓ Approve &amp; Activate</button>
+              <button className="btn-reject">✗ Reject Application</button>
+            </div>
+          </div>
+        </>
+      ) : (
+        filteredUsers.map((user, idx) => (
+          <div className="user-card" key={idx}>
+            <div className="user-card-top">
+              <div>
+                <h4>{user.name}</h4>
+                <p>{user.type}</p>
+                <p>Email: {user.email}</p>
+                {user.joined ? (
+                  <p>Joined: {user.joined} | Services: {user.services}</p>
+                ) : (
+                  <p>Registered: {user.registeredAgo}</p>
+                )}
+              </div>
+              <span className={`badge ${user.badgeClass}`}>{user.status}</span>
+            </div>
+            <div className="user-card-actions">
+              {!user.isPending ? (
+                <>
+                  <button className="btn-view">View Details</button>
+                  <button className="btn-edit">Edit</button>
+                </>
               ) : (
-                <p>Registered: {user.registeredAgo}</p>
+                <>
+                  <button className="btn-approve">Approve</button>
+                  <button className="btn-reject">Reject</button>
+                </>
               )}
             </div>
-            <span className={`badge ${user.badgeClass}`}>{user.status}</span>
           </div>
-
-          <div className="user-card-actions">
-            {!user.isPending ? (
-              <>
-                <button className="btn-view">View Details</button>
-                <button className="btn-edit">Edit</button>
-              </>
-            ) : (
-              <>
-                <button className="btn-approve">Approve</button>
-                <button className="btn-reject">Reject</button>
-              </>
-            )}
-          </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 };
@@ -197,55 +243,104 @@ const ServicesTab = () => {
         ))}
       </div>
 
-      {/* Service #1234 */}
-      <div className="service-card">
-        <div className="service-card-top">
-          <h4>Service #1234 – Elder Care</h4>
-          <span className="badge badge-active">Active</span>
-        </div>
-        <p><strong>Provider:</strong> Ms. Minosh</p>
-        <p><strong>Client:</strong> Zarah Mehar</p>
-        <p><strong>Location:</strong> Galle</p>
-        <p><strong>Started:</strong> Jan 5, 2026</p>
-        <p><strong>Duration:</strong> Monthly</p>
-        <p><strong>Amount:</strong> Rs. 75,000</p>
-        <div className="service-card-actions">
-          <button className="btn-view">View Full Details</button>
-          <button className="btn-edit">Contact Parties</button>
-        </div>
-      </div>
+      {/* Issues content - shown when Issues tab is clicked */}
+      {filter === "Issues" ? (
+        <>
+          <div className="service-card issue-priority-high service-card">
+            <h4>
+              <span className="priority-dot dot-red"></span>
+              High Priority – Payment Issue
+            </h4>
+            <p><strong>Ticket #458</strong></p>
+            <p><strong>From:</strong> Zarah Mehar (Family)</p>
+            <p><strong>Issue:</strong> Payment not reflected after 48 hours</p>
+            <p><strong>Submitted:</strong> 30 minutes ago</p>
+            <div style={{ margin: "8px 0" }}>
+              <span className="badge-urgent">Urgent</span>
+            </div>
+            <div className="service-card-actions">
+              <button className="btn-respond">View &amp; Respond</button>
+              <button className="btn-resolve">Mark Resolved</button>
+            </div>
+          </div>
 
-      {/* Service #5678 */}
-      <div className="service-card">
-        <div className="service-card-top">
-          <h4>Service #5678 – Hospital Patient Care</h4>
-          <span className="badge badge-verified">Completed</span>
-        </div>
-        <p><strong>Provider:</strong> Mr. Karthic Gopal (4.9⭐)</p>
-        <p><strong>Client:</strong> Ravi Kumar</p>
-        <p><strong>Location:</strong> Colombo</p>
-        <p><strong>Completed:</strong> Dec 28, 2025</p>
-        <p><strong>Amount:</strong> Rs. 49,000 (Paid)</p>
-        <div className="service-card-actions">
-          <button className="btn-view">View Full Details</button>
-        </div>
-      </div>
+          <div className="service-card issue-priority-medium service-card">
+            <h4>
+              <span className="priority-dot dot-orange"></span>
+              Medium – Profile Update Request
+            </h4>
+            <p><strong>Ticket #457</strong></p>
+            <p><strong>From:</strong> Ravi Kumar (Provider)</p>
+            <p><strong>Issue:</strong> Cannot update service locations</p>
+            <p><strong>Submitted:</strong> 4 hours ago</p>
+            <div style={{ margin: "8px 0" }}>
+              <span className="badge-medium-p">Pending</span>
+            </div>
+            <div className="service-card-actions">
+              <button className="btn-respond">View &amp; Respond</button>
+              <button className="btn-resolve">Mark Resolved</button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Service #1234 - shown for All Services and Active */}
+          {(filter === "All Services" || filter === "Active") && (
+            <div className="service-card">
+              <div className="service-card-top">
+                <h4>Service #1234 – Elder Care</h4>
+                <span className="badge badge-active">Active</span>
+              </div>
+              <p><strong>Provider:</strong> Ms. Minosh</p>
+              <p><strong>Client:</strong> Zarah Mehar</p>
+              <p><strong>Location:</strong> Galle</p>
+              <p><strong>Started:</strong> Jan 5, 2026</p>
+              <p><strong>Duration:</strong> Monthly</p>
+              <p><strong>Amount:</strong> Rs. 75,000</p>
+              <div className="service-card-actions">
+                <button className="btn-view">View Full Details</button>
+                <button className="btn-edit">Contact Parties</button>
+              </div>
+            </div>
+          )}
 
-      {/* Service #9012 - Issue */}
-      <div className="service-card issue-card">
-        <div className="service-card-top">
-          <h4>⚠️ Service #9012 – Child Care [Issue Reported]</h4>
-          <span className="badge badge-pending">Requires Action</span>
-        </div>
-        <p><strong>Provider:</strong> Ms. Minosh (Pending Investigation)</p>
-        <p><strong>Client:</strong> Anonymous</p>
-        <p><strong>Issue:</strong> Provider didn't show up</p>
-        <p><strong>Reported:</strong> 2 hours ago</p>
-        <div className="service-card-actions">
-          <button className="btn-reject">View Report</button>
-          <button className="btn-view">Investigate</button>
-        </div>
-      </div>
+          {/* Service #5678 - shown for All Services and Completed */}
+          {(filter === "All Services" || filter === "Completed") && (
+            <div className="service-card">
+              <div className="service-card-top">
+                <h4>Service #5678 – Hospital Patient Care</h4>
+                <span className="badge badge-verified">Completed</span>
+              </div>
+              <p><strong>Provider:</strong> Mr. Karthic Gopal (4.9⭐)</p>
+              <p><strong>Client:</strong> Ravi Kumar</p>
+              <p><strong>Location:</strong> Colombo</p>
+              <p><strong>Completed:</strong> Dec 28, 2025</p>
+              <p><strong>Amount:</strong> Rs. 49,000 (Paid)</p>
+              <div className="service-card-actions">
+                <button className="btn-view">View Full Details</button>
+              </div>
+            </div>
+          )}
+
+          {/* Service #9012 - shown for All Services only */}
+          {filter === "All Services" && (
+            <div className="service-card issue-card">
+              <div className="service-card-top">
+                <h4>⚠️ Service #9012 – Child Care [Issue Reported]</h4>
+                <span className="badge badge-pending">Requires Action</span>
+              </div>
+              <p><strong>Provider:</strong> Ms. Minosh (Pending Investigation)</p>
+              <p><strong>Client:</strong> Anonymous</p>
+              <p><strong>Issue:</strong> Provider didn't show up</p>
+              <p><strong>Reported:</strong> 2 hours ago</p>
+              <div className="service-card-actions">
+                <button className="btn-reject">View Report</button>
+                <button className="btn-view">Investigate</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
@@ -594,7 +689,6 @@ const VerificationTab = () => {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Home");
-  const [serviceSubTab, setServiceSubTab] = useState("Services");
 
   const handleLogout = () => {
     navigate("/admin/login");
@@ -607,7 +701,7 @@ const AdminDashboard = () => {
       case "Users":
         return <UsersTab />;
       case "Services":
-        return serviceSubTab === "Issues" ? <IssuesTab /> : <ServicesTab />;
+        return <ServicesTab />;
       case "Reports":
         return <ReportsTab />;
       case "Finance":
@@ -623,36 +717,10 @@ const AdminDashboard = () => {
     <div className="admin-layout">
       <AdminTopBar
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab === "Users") setServiceSubTab("Users");
-        }}
+        setActiveTab={setActiveTab}
         onLogout={handleLogout}
       />
-
-      {/* Extra sub-nav for Users tab: switch to Provider Verification */}
-      {activeTab === "Users" && (
-        <div style={{ padding: "0 24px", background: "#f0f4f8" }}>
-          <div className="filter-tabs" style={{ paddingTop: "12px" }}>
-            <button
-              className={`filter-tab ${serviceSubTab !== "Verification" ? "active" : ""}`}
-              onClick={() => setServiceSubTab("Users")}
-            >
-              User Management
-            </button>
-            <button
-              className={`filter-tab ${serviceSubTab === "Verification" ? "active" : ""}`}
-              onClick={() => setServiceSubTab("Verification")}
-            >
-              Provider Verification
-            </button>
-          </div>
-        </div>
-      )}
-
-      {activeTab === "Users" && serviceSubTab === "Verification"
-        ? <VerificationTab />
-        : renderContent()}
+      {renderContent()}
     </div>
   );
 };
