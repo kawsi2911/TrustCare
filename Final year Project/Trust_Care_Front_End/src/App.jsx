@@ -32,6 +32,9 @@ import FamilyProfile from "./Family-Dashboard/familyprofile.jsx";
 import ServiceProviderForget from "./Provider-Login/ServiceProviderForget.jsx";
 import ServiceProviderProfileEdit from "./Provider-Login/ServiceProvideProfileEdit.jsx";
 import FamilyProfileEdit from "./family-components/FamilyProfileEdit.jsx";
+// Admin imports
+import AdminLogin from "./admin/AdminLogin.jsx";
+import AdminDashboard from "./admin/AdminDashboard.jsx";
 
 function App() {
   return (
@@ -83,6 +86,11 @@ function App() {
         <Route path = "/serviceproviderforget" element ={<ServiceProviderForget/>}/>
         <Route path = "/serviceproviderprofileedit" element = {<ServiceProviderProfileEdit/>}/>
         <Route path = "/familyprofileedit" element = {<FamilyProfileEdit/>}/>
+
+         {/* Admin routes */}
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
       </Routes>
       
