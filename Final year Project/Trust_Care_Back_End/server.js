@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import familyRoutes from "./routes/familyRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -14,10 +15,11 @@ app.use(express.json());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
-.then(()=> console.log("MongoDB connected"))
-.catch(err=> console.log(err));
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
 
-// routes
+// Routes
 app.use("/api/family", familyRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

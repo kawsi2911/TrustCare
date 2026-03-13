@@ -22,18 +22,24 @@ const AdminLogin = () => {
     }
     setLoading(true);
     try {
-      // Replace with your actual API call
-      // const res = await axios.post("/api/admin/login", formData);
-      // navigate("/admin/dashboard");
+      const response = await fetch("http://localhost:5000/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      // Demo: hardcoded check
-      if (formData.username === "admin" && formData.password === "admin123") {
+      const data = await response.json();
+
+      if (data.success) {
+        // Save token and admin info
+        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("adminInfo", JSON.stringify(data.admin));
         navigate("/admin/dashboard");
       } else {
-        setError("Invalid username or password.");
+        setError(data.message || "Invalid username or password.");
       }
     } catch (err) {
-      setError("Login failed. Please try again.");
+      setError("Cannot connect to server. Please try again.");
     } finally {
       setLoading(false);
     }

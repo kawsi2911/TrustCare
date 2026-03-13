@@ -13,9 +13,7 @@ const AdminTopBar = ({ activeTab, setActiveTab, onLogout }) => {
           <img src={logo} alt="Trust Care Logo" className="topbar-logo" />
         </div>
         <h1 className="topbar-title">Admin Dashboard</h1>
-        <button className="logout-btn" onClick={onLogout}>
-          ▶ Log Out
-        </button>
+        <div className="topbar-right-placeholder"></div>
       </div>
       <div className="admin-nav">
         {tabs.map((tab) => (
@@ -27,16 +25,31 @@ const AdminTopBar = ({ activeTab, setActiveTab, onLogout }) => {
             {tab}
           </button>
         ))}
+        <button className="logout-btn" onClick={onLogout}>
+          ▶ Log Out
+        </button>
       </div>
     </>
   );
 };
 
 // ─── HOME TAB ───────────────────────────────────────────────────────────────
-const HomeTab = ({ setActiveTab }) => (
+const HomeTab = ({ setActiveTab }) => {
+  const adminInfo = JSON.parse(localStorage.getItem("adminInfo") || "{}");
+  const lastLogin = adminInfo.lastLogin
+    ? new Date(adminInfo.lastLogin).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Today";
+
+  return (
   <div className="admin-content">
     <div className="welcome-banner">
-      Welcome, Admin | Last Login: Today, 09:30 AM
+      Welcome, {adminInfo.username || "Admin"} | Last Login: {lastLogin}
     </div>
 
     <div className="stats-grid">
@@ -84,7 +97,8 @@ const HomeTab = ({ setActiveTab }) => (
       </button>
     </div>
   </div>
-);
+  );
+};
 
 // ─── USERS TAB ──────────────────────────────────────────────────────────────
 const UsersTab = () => {
@@ -691,6 +705,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("Home");
 
   const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminInfo");
     navigate("/admin/login");
   };
 
