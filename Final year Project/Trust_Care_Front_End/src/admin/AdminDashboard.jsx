@@ -38,104 +38,158 @@ const HomeTab = ({ setActiveTab }) => {
   const adminInfo = JSON.parse(localStorage.getItem("adminInfo") || "{}");
   const lastLogin = adminInfo.lastLogin
     ? new Date(adminInfo.lastLogin).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+        month: "short", day: "numeric", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
       })
     : "Today";
 
+  const [stats, setStats] = useState({
+    totalUsers: 0, totalProviders: 0, totalFamilies: 0,
+    activeServices: 0, pendingUsers: 0,
+  });
+
+  useState(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch("http://localhost:5000/api/admin/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) setStats(data.stats);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
-  <div className="admin-content">
-    <div className="welcome-banner">
-      Welcome, {adminInfo.username || "Admin"} | Last Login: {lastLogin}
-    </div>
+    <div className="admin-content">
+      <div className="welcome-banner">
+        Welcome, {adminInfo.username || "Admin"} | Last Login: {lastLogin}
+      </div>
 
-    <div className="stats-grid">
-      <div className="stat-card stat-blue">
-        <div className="stat-number">1,247</div>
-        <div className="stat-label">Total Users</div>
+      <div className="stats-grid">
+        <div className="stat-card stat-blue">
+          <div className="stat-number">{stats.totalUsers.toLocaleString()}</div>
+          <div className="stat-label">Total Users</div>
+        </div>
+        <div className="stat-card stat-green">
+          <div className="stat-number">{stats.totalProviders.toLocaleString()}</div>
+          <div className="stat-label">Service Providers</div>
+        </div>
+        <div className="stat-card stat-teal">
+          <div className="stat-number">{stats.totalFamilies.toLocaleString()}</div>
+          <div className="stat-label">Families</div>
+        </div>
+        <div className="stat-card stat-orange">
+          <div className="stat-number">{stats.activeServices.toLocaleString()}</div>
+          <div className="stat-label">Active Services</div>
+        </div>
+        <div className="stat-card stat-purple">
+          <div className="stat-number">0</div>
+          <div className="stat-label">Completed</div>
+        </div>
+        <div className="stat-card stat-red">
+          <div className="stat-number">{stats.pendingUsers.toLocaleString()}</div>
+          <div className="stat-label">Pending Issues</div>
+        </div>
       </div>
-      <div className="stat-card stat-green">
-        <div className="stat-number">532</div>
-        <div className="stat-label">Service Providers</div>
-      </div>
-      <div className="stat-card stat-teal">
-        <div className="stat-number">715</div>
-        <div className="stat-label">Families</div>
-      </div>
-      <div className="stat-card stat-orange">
-        <div className="stat-number">80</div>
-        <div className="stat-label">Active Services</div>
-      </div>
-      <div className="stat-card stat-purple">
-        <div className="stat-number">1,523</div>
-        <div className="stat-label">Completed</div>
-      </div>
-      <div className="stat-card stat-red">
-        <div className="stat-number">12</div>
-        <div className="stat-label">Pending Issues</div>
-      </div>
-    </div>
 
-    <div className="activity-card">
-      <h3>📊 Recent Activity</h3>
-      <div className="activity-item">✅ New provider registered: John Doe</div>
-      <div className="activity-item">✅ Service completed: Elder Care #1234</div>
-      <div className="activity-item">⚠️ Report submitted: Service #5678</div>
-      <div className="activity-item">✅ Payment processed: Rs. 75,000</div>
-    </div>
+      <div className="activity-card">
+        <h3>📊 Recent Activity</h3>
+        <div className="activity-item">✅ New provider registered: John Doe</div>
+        <div className="activity-item">✅ Service completed: Elder Care #1234</div>
+        <div className="activity-item">⚠️ Report submitted: Service #5678</div>
+        <div className="activity-item">✅ Payment processed: Rs. 75,000</div>
+      </div>
 
-    <div className="quick-actions-card">
-      <h3>Quick Actions</h3>
-      <button className="action-btn action-btn-blue" onClick={() => setActiveTab("Users")}>
-        View All Users
-      </button>
-      <button className="action-btn action-btn-orange" onClick={() => setActiveTab("Reports")}>
-        View Reports
-      </button>
+      <div className="quick-actions-card">
+        <h3>Quick Actions</h3>
+        <button className="action-btn action-btn-blue" onClick={() => setActiveTab("Users")}>
+          View All Users
+        </button>
+        <button className="action-btn action-btn-orange" onClick={() => setActiveTab("Reports")}>
+          View Reports
+        </button>
+      </div>
     </div>
-  </div>
   );
 };
 
 // ─── USERS TAB ──────────────────────────────────────────────────────────────
 const UsersTab = () => {
   const [filter, setFilter] = useState("All Users");
-  const filters = ["All Users", "Families", "Verified", "Pending"];
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const filters = ["All Users", "Families", "Providers", "Verified", "Pending"];
 
-  const users = [
-    {
-      name: "Zarah Mehar",
-      type: "Family | Service Taker",
-      email: "sarah@email.com",
-      joined: "Dec 2024",
-      services: 8,
-      status: "Active",
-      badgeClass: "badge-active",
-      isPending: false,
-    },
-    {
-      name: "Pending User",
-      type: "Service Provider | Verification Pending",
-      email: "pending@email.com",
-      joined: null,
-      registeredAgo: "2 hours ago",
-      status: "Pending",
-      badgeClass: "badge-pending",
-      isPending: true,
-    },
-  ];
+  const fetchUsers = async (filterType, searchText) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("adminToken");
+      let url = "http://localhost:5000/api/admin/users?";
+      if (filterType && filterType !== "All Users") url += `type=${filterType}&`;
+      if (searchText) url += `search=${searchText}`;
 
-  // Filter users based on selected tab
-  const filteredUsers = users.filter((user) => {
-    if (filter === "All Users") return true;
-    if (filter === "Families") return user.type.includes("Family");
-    if (filter === "Verified") return user.status === "Active";
-    if (filter === "Pending") return user.isPending;
-    return true;
-  });
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setUsers(data.users);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on filter or search change
+  useState(() => { fetchUsers(filter, search); }, []);
+
+  const handleFilterChange = (f) => {
+    setFilter(f);
+    fetchUsers(f, search);
+  };
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    fetchUsers(filter, e.target.value);
+  };
+
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`http://localhost:5000/api/admin/users/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (data.success) fetchUsers(filter, search);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
+  };
+
+  const getBadgeClass = (status) => {
+    if (status === "Active" || status === "Verified") return "badge-active";
+    if (status === "Pending") return "badge-pending";
+    if (status === "Inactive") return "badge-inactive";
+    return "badge-pending";
+  };
+
+  const getTimeAgo = (date) => {
+    const diff = Math.floor((new Date() - new Date(date)) / 1000 / 60);
+    if (diff < 60) return `${diff} minutes ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+    return `${Math.floor(diff / 1440)} days ago`;
+  };
 
   return (
     <div className="admin-content">
@@ -144,6 +198,8 @@ const UsersTab = () => {
           className="search-bar"
           type="text"
           placeholder="Search users by name, email, NIC......"
+          value={search}
+          onChange={handleSearch}
         />
       </div>
 
@@ -152,76 +208,75 @@ const UsersTab = () => {
           <button
             key={f}
             className={`filter-tab ${filter === f ? "active" : ""}`}
-            onClick={() => setFilter(f)}
+            onClick={() => handleFilterChange(f)}
           >
             {f}
           </button>
         ))}
       </div>
 
-      {/* Show Provider Verification section when Pending tab is selected */}
-      {filter === "Pending" ? (
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+          Loading users...
+        </div>
+      ) : filter === "Pending" ? (
         <>
           <div className="verification-header-banner">Provider Verification</div>
           <div className="pending-alert">
-            ⚠️ 5 providers waiting for verification
+            ⚠️ {users.filter(u => u.status === "Pending").length} providers waiting for verification
           </div>
-          <div className="verification-card">
-            <h4>Pending Verification – Provider #789</h4>
-            <div className="provider-info-row">
-              <div className="provider-avatar">👤</div>
-              <div className="provider-details">
-                <p><strong>Name:</strong> Ravi Kumar</p>
-                <p><strong>NIC:</strong> 456789012V</p>
-                <p><strong>Contact:</strong> +94 77 999 8898</p>
-                <p><strong>Service Type:</strong> Elder Care</p>
-                <p><strong>Experience:</strong> 6 years</p>
-                <p><strong>Registered:</strong> 3 hours ago</p>
+          {users.filter(u => u.status === "Pending").map((user, idx) => (
+            <div className="verification-card" key={idx}>
+              <h4>Pending Verification – {user.name}</h4>
+              <div className="provider-info-row">
+                <div className="provider-avatar">👤</div>
+                <div className="provider-details">
+                  <p><strong>Name:</strong> {user.name}</p>
+                  <p><strong>NIC:</strong> {user.nic || "N/A"}</p>
+                  <p><strong>Email:</strong> {user.email}</p>
+                  <p><strong>Phone:</strong> {user.phone || "N/A"}</p>
+                  <p><strong>Type:</strong> {user.userType}</p>
+                  <p><strong>Registered:</strong> {getTimeAgo(user.createdAt)}</p>
+                </div>
+              </div>
+              <div className="verification-actions">
+                <button className="btn-approve" onClick={() => handleStatusUpdate(user._id, "Active")}>
+                  ✓ Approve &amp; Activate
+                </button>
+                <button className="btn-reject" onClick={() => handleStatusUpdate(user._id, "Inactive")}>
+                  ✗ Reject Application
+                </button>
               </div>
             </div>
-            <div className="documents-card">
-              <h5>Uploaded Documents</h5>
-              <div className="doc-item"><span className="doc-verified">✅</span> NIC Copy – Verified</div>
-              <div className="doc-item"><span className="doc-verified">✅</span> Photo – Verified</div>
-              <div className="doc-item"><span className="doc-verified">✅</span> Certificates – Verified</div>
-              <div className="doc-item"><span className="doc-pending">⚠️</span> Police Report – Pending</div>
+          ))}
+          {users.filter(u => u.status === "Pending").length === 0 && (
+            <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+              No pending users found.
             </div>
-            <label className="form-label">Verification Notes</label>
-            <textarea className="notes-textarea" placeholder="Add notes about verification..." />
-            <div className="verification-actions">
-              <button className="btn-approve">✓ Approve &amp; Activate</button>
-              <button className="btn-reject">✗ Reject Application</button>
-            </div>
-          </div>
+          )}
         </>
+      ) : users.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+          No users found.
+        </div>
       ) : (
-        filteredUsers.map((user, idx) => (
+        users.map((user, idx) => (
           <div className="user-card" key={idx}>
             <div className="user-card-top">
               <div>
                 <h4>{user.name}</h4>
-                <p>{user.type}</p>
+                <p>{user.userType} | {user.status}</p>
                 <p>Email: {user.email}</p>
-                {user.joined ? (
-                  <p>Joined: {user.joined} | Services: {user.services}</p>
-                ) : (
-                  <p>Registered: {user.registeredAgo}</p>
-                )}
+                <p>Joined: {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })} | Services: {user.servicesCount || 0}</p>
               </div>
-              <span className={`badge ${user.badgeClass}`}>{user.status}</span>
+              <span className={`badge ${getBadgeClass(user.status)}`}>{user.status}</span>
             </div>
             <div className="user-card-actions">
-              {!user.isPending ? (
-                <>
-                  <button className="btn-view">View Details</button>
-                  <button className="btn-edit">Edit</button>
-                </>
-              ) : (
-                <>
-                  <button className="btn-approve">Approve</button>
-                  <button className="btn-reject">Reject</button>
-                </>
-              )}
+              <button className="btn-view">View Details</button>
+              <button className="btn-edit">Edit</button>
+              <button className="btn-reject" onClick={() => handleStatusUpdate(user._id, "Inactive")}>
+                Deactivate
+              </button>
             </div>
           </div>
         ))
@@ -479,7 +534,7 @@ const FinanceTab = () => (
       </div>
     </div>
 
-    <button className="generate-btn">Generate Report</button>
+    <button className="generate-btn">View Detailed Report</button>
   </div>
 );
 
