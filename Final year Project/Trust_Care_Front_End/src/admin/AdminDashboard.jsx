@@ -288,7 +288,75 @@ const UsersTab = () => {
 // ─── SERVICES TAB ───────────────────────────────────────────────────────────
 const ServicesTab = () => {
   const [filter, setFilter] = useState("All Services");
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const filters = ["All Services", "Active", "Completed", "Issues"];
+
+  const fetchServices = async (filterType, searchText) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("adminToken");
+      let url = "http://localhost:5000/api/admin/services?";
+      if (filterType === "Issues") url += `status=Issue Reported&`;
+      else if (filterType && filterType !== "All Services") url += `status=${filterType}&`;
+      if (searchText) url += `search=${searchText}`;
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setServices(data.services);
+    } catch (err) {
+      console.error("Failed to fetch services:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useState(() => { fetchServices(filter, search); }, []);
+
+  const handleFilterChange = (f) => {
+    setFilter(f);
+    fetchServices(f, search);
+  };
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    fetchServices(filter, e.target.value);
+  };
+
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      await fetch(`http://localhost:5000/api/admin/services/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      fetchServices(filter, search);
+    } catch (err) {
+      console.error("Failed to update service status:", err);
+    }
+  };
+
+  const getBadgeClass = (status) => {
+    if (status === "Active") return "badge-active";
+    if (status === "Completed") return "badge-verified";
+    if (status === "Issue Reported") return "badge-pending";
+    if (status === "Cancelled") return "badge-inactive";
+    return "badge-pending";
+  };
+
+  const getTimeAgo = (date) => {
+    const diff = Math.floor((new Date() - new Date(date)) / 1000 / 60);
+    if (diff < 60) return `${diff} minutes ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+    return `${Math.floor(diff / 1440)} days ago`;
+  };
 
   return (
     <div className="admin-content">
@@ -296,7 +364,9 @@ const ServicesTab = () => {
         <input
           className="search-bar"
           type="text"
-          placeholder="Search users by name, email, NIC......"
+          placeholder="Search by service number, provider, client..."
+          value={search}
+          onChange={handleSearch}
         />
       </div>
 
@@ -305,110 +375,70 @@ const ServicesTab = () => {
           <button
             key={f}
             className={`filter-tab ${filter === f ? "active" : ""}`}
-            onClick={() => setFilter(f)}
+            onClick={() => handleFilterChange(f)}
           >
             {f}
           </button>
         ))}
       </div>
 
-      {/* Issues content - shown when Issues tab is clicked */}
-      {filter === "Issues" ? (
-        <>
-          <div className="service-card issue-priority-high service-card">
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+          Loading services...
+        </div>
+      ) : services.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+          No services found.
+        </div>
+      ) : filter === "Issues" ? (
+        // Issues view
+        services.map((service, idx) => (
+          <div className="service-card issue-priority-high" key={idx}>
             <h4>
               <span className="priority-dot dot-red"></span>
-              High Priority – Payment Issue
+              {service.serviceNumber} – {service.serviceType}
             </h4>
-            <p><strong>Ticket #458</strong></p>
-            <p><strong>From:</strong> Zarah Mehar (Family)</p>
-            <p><strong>Issue:</strong> Payment not reflected after 48 hours</p>
-            <p><strong>Submitted:</strong> 30 minutes ago</p>
+            <p><strong>Provider:</strong> {service.provider.name}</p>
+            <p><strong>Client:</strong> {service.client.name}</p>
+            <p><strong>Issue:</strong> {service.issueDescription || "Issue reported"}</p>
+            <p><strong>Reported:</strong> {getTimeAgo(service.createdAt)}</p>
             <div style={{ margin: "8px 0" }}>
               <span className="badge-urgent">Urgent</span>
             </div>
             <div className="service-card-actions">
               <button className="btn-respond">View &amp; Respond</button>
-              <button className="btn-resolve">Mark Resolved</button>
+              <button className="btn-resolve" onClick={() => handleStatusUpdate(service._id, "Completed")}>
+                Mark Resolved
+              </button>
             </div>
           </div>
-
-          <div className="service-card issue-priority-medium service-card">
-            <h4>
-              <span className="priority-dot dot-orange"></span>
-              Medium – Profile Update Request
-            </h4>
-            <p><strong>Ticket #457</strong></p>
-            <p><strong>From:</strong> Ravi Kumar (Provider)</p>
-            <p><strong>Issue:</strong> Cannot update service locations</p>
-            <p><strong>Submitted:</strong> 4 hours ago</p>
-            <div style={{ margin: "8px 0" }}>
-              <span className="badge-medium-p">Pending</span>
-            </div>
-            <div className="service-card-actions">
-              <button className="btn-respond">View &amp; Respond</button>
-              <button className="btn-resolve">Mark Resolved</button>
-            </div>
-          </div>
-        </>
+        ))
       ) : (
-        <>
-          {/* Service #1234 - shown for All Services and Active */}
-          {(filter === "All Services" || filter === "Active") && (
-            <div className="service-card">
-              <div className="service-card-top">
-                <h4>Service #1234 – Elder Care</h4>
-                <span className="badge badge-active">Active</span>
-              </div>
-              <p><strong>Provider:</strong> Ms. Minosh</p>
-              <p><strong>Client:</strong> Zarah Mehar</p>
-              <p><strong>Location:</strong> Galle</p>
-              <p><strong>Started:</strong> Jan 5, 2026</p>
-              <p><strong>Duration:</strong> Monthly</p>
-              <p><strong>Amount:</strong> Rs. 75,000</p>
-              <div className="service-card-actions">
-                <button className="btn-view">View Full Details</button>
-                <button className="btn-edit">Contact Parties</button>
-              </div>
+        // Normal services view
+        services.map((service, idx) => (
+          <div className={`service-card ${service.status === "Issue Reported" ? "issue-card" : ""}`} key={idx}>
+            <div className="service-card-top">
+              <h4>{service.serviceNumber} – {service.serviceType}</h4>
+              <span className={`badge ${getBadgeClass(service.status)}`}>{service.status}</span>
             </div>
-          )}
-
-          {/* Service #5678 - shown for All Services and Completed */}
-          {(filter === "All Services" || filter === "Completed") && (
-            <div className="service-card">
-              <div className="service-card-top">
-                <h4>Service #5678 – Hospital Patient Care</h4>
-                <span className="badge badge-verified">Completed</span>
-              </div>
-              <p><strong>Provider:</strong> Mr. Karthic Gopal (4.9⭐)</p>
-              <p><strong>Client:</strong> Ravi Kumar</p>
-              <p><strong>Location:</strong> Colombo</p>
-              <p><strong>Completed:</strong> Dec 28, 2025</p>
-              <p><strong>Amount:</strong> Rs. 49,000 (Paid)</p>
-              <div className="service-card-actions">
-                <button className="btn-view">View Full Details</button>
-              </div>
+            <p><strong>Provider:</strong> {service.provider.name}</p>
+            <p><strong>Client:</strong> {service.client.name}</p>
+            <p><strong>Location:</strong> {service.location}</p>
+            <p><strong>Started:</strong> {new Date(service.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+            <p><strong>Amount:</strong> Rs. {service.amount.toLocaleString()} {service.isPaid ? "(Paid)" : "(Unpaid)"}</p>
+            <div className="service-card-actions">
+              <button className="btn-view">View Full Details</button>
+              {service.status === "Active" && (
+                <button className="btn-edit" onClick={() => handleStatusUpdate(service._id, "Completed")}>
+                  Mark Completed
+                </button>
+              )}
+              <button className="btn-reject" onClick={() => handleStatusUpdate(service._id, "Cancelled")}>
+                Cancel
+              </button>
             </div>
-          )}
-
-          {/* Service #9012 - shown for All Services only */}
-          {filter === "All Services" && (
-            <div className="service-card issue-card">
-              <div className="service-card-top">
-                <h4>⚠️ Service #9012 – Child Care [Issue Reported]</h4>
-                <span className="badge badge-pending">Requires Action</span>
-              </div>
-              <p><strong>Provider:</strong> Ms. Minosh (Pending Investigation)</p>
-              <p><strong>Client:</strong> Anonymous</p>
-              <p><strong>Issue:</strong> Provider didn't show up</p>
-              <p><strong>Reported:</strong> 2 hours ago</p>
-              <div className="service-card-actions">
-                <button className="btn-reject">View Report</button>
-                <button className="btn-view">Investigate</button>
-              </div>
-            </div>
-          )}
-        </>
+          </div>
+        ))
       )}
     </div>
   );
@@ -419,6 +449,32 @@ const ReportsTab = () => {
   const [reportType, setReportType] = useState("User Growth Report");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [generated, setGenerated] = useState(false);
+
+  const handleGenerateReport = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("adminToken");
+      let url = `http://localhost:5000/api/admin/reports?reportType=${encodeURIComponent(reportType)}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate)   url += `&toDate=${toDate}`;
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReport(data.report);
+        setGenerated(true);
+      }
+    } catch (err) {
+      console.error("Failed to generate report:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="admin-content">
@@ -428,7 +484,7 @@ const ReportsTab = () => {
       <select
         className="form-select"
         value={reportType}
-        onChange={(e) => setReportType(e.target.value)}
+        onChange={(e) => { setReportType(e.target.value); setGenerated(false); }}
       >
         <option>User Growth Report</option>
         <option>Service Summary Report</option>
@@ -457,29 +513,41 @@ const ReportsTab = () => {
         </div>
       </div>
 
-      <button className="generate-btn">Generate Report</button>
+      <button className="generate-btn" onClick={handleGenerateReport} disabled={loading}>
+        {loading ? "Generating..." : "View Detailed Report"}
+      </button>
 
-      <div className="summary-card">
-        <h4>📋 Monthly Summary (January 2026)</h4>
-        <div className="chart-placeholder">
-          <div className="chart-icon">📊</div>
-          <div>Chart Placeholder</div>
-          <div>Service distribution by type</div>
+      {generated && report && (
+        <div className="summary-card">
+          <h4>📋 {report.title}</h4>
+          {fromDate && toDate && (
+            <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "12px" }}>
+              Period: {new Date(fromDate).toLocaleDateString()} – {new Date(toDate).toLocaleDateString()}
+            </p>
+          )}
+          <div className="chart-placeholder">
+            <div className="chart-icon">📊</div>
+            <div>{report.title}</div>
+            <div>Real-time data from MongoDB</div>
+          </div>
+          {report.summary.map((item, idx) => (
+            <div className="summary-item" key={idx}>
+              <span>{item.label}:</span>
+              <span><strong>{item.value}</strong></span>
+            </div>
+          ))}
+          <div className="export-row" style={{ marginTop: "16px" }}>
+            <button className="btn-export-pdf">Export PDF</button>
+            <button className="btn-export-excel">Export Excel</button>
+          </div>
         </div>
-        <div className="summary-item"><span>Total Services:</span><span>156</span></div>
-        <div className="summary-item"><span>Elder Care:</span><span>58 (37%)</span></div>
-        <div className="summary-item"><span>Child Care:</span><span>42 (27%)</span></div>
-        <div className="summary-item"><span>Hospital Patient:</span><span>31 (20%)</span></div>
-        <div className="summary-item"><span>Home Patient:</span><span>25 (16%)</span></div>
-        <div className="revenue-total">
-          Total Revenue: Rs. 8,750,000{" "}
-          <span className="growth-text">+23% from last month</span>
+      )}
+
+      {!generated && (
+        <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+          Select a report type and click "View Detailed Report" to see real data
         </div>
-        <div className="export-row">
-          <button className="btn-export-pdf">Export PDF</button>
-          <button className="btn-export-excel">Export Excel</button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import Admin from "../models/adminModel.js";
 import User from "../models/userModel.js";
+import Service from "../models/serviceModel.js";
 import jwt from "jsonwebtoken";
 
 // ── Verify Token (middleware) ────────────────────────────────────────────────
@@ -162,6 +163,217 @@ export const deleteUser = async (req, res) => {
     res.status(200).json({ success: true, message: "User deleted successfully" });
   } catch (error) {
     console.error("Delete user error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Get All Services ──────────────────────────────────────────────────────────
+export const getAllServices = async (req, res) => {
+  try {
+    const { status, search } = req.query;
+    let filter = {};
+
+    if (status && status !== "All Services") filter.status = status;
+    if (search) {
+      filter.$or = [
+        { serviceNumber: { $regex: search, $options: "i" } },
+        { "provider.name": { $regex: search, $options: "i" } },
+        { "client.name": { $regex: search, $options: "i" } },
+        { serviceType: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const services = await Service.find(filter).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: services.length, services });
+  } catch (error) {
+    console.error("Get all services error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Get Single Service ────────────────────────────────────────────────────────
+export const getServiceById = async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+    res.status(200).json({ success: true, service });
+  } catch (error) {
+    console.error("Get service error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Update Service Status ─────────────────────────────────────────────────────
+export const updateServiceStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const service = await Service.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+    res.status(200).json({ success: true, message: `Service status updated to ${status}`, service });
+  } catch (error) {
+    console.error("Update service status error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Create Service ────────────────────────────────────────────────────────────
+export const createService = async (req, res) => {
+  try {
+    const service = new Service(req.body);
+    await service.save();
+    res.status(201).json({ success: true, message: "Service created successfully", service });
+  } catch (error) {
+    console.error("Create service error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Delete Service ────────────────────────────────────────────────────────────
+export const deleteService = async (req, res) => {
+  try {
+    const service = await Service.findByIdAndDelete(req.params.id);
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+    res.status(200).json({ success: true, message: "Service deleted successfully" });
+  } catch (error) {
+    console.error("Delete service error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Get Service Stats ─────────────────────────────────────────────────────────
+export const getServiceStats = async (req, res) => {
+  try {
+    const total      = await Service.countDocuments();
+    const active     = await Service.countDocuments({ status: "Active" });
+    const completed  = await Service.countDocuments({ status: "Completed" });
+    const issues     = await Service.countDocuments({ status: "Issue Reported" });
+    const cancelled  = await Service.countDocuments({ status: "Cancelled" });
+
+    res.status(200).json({
+      success: true,
+      stats: { total, active, completed, issues, cancelled },
+    });
+  } catch (error) {
+    console.error("Service stats error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Generate Report ───────────────────────────────────────────────────────────
+export const generateReport = async (req, res) => {
+  try {
+    const { reportType, fromDate, toDate } = req.query;
+
+    const dateFilter = {};
+    if (fromDate) dateFilter.$gte = new Date(fromDate);
+    if (toDate)   dateFilter.$lte = new Date(new Date(toDate).setHours(23, 59, 59));
+
+    let report = {};
+
+    if (reportType === "User Growth Report") {
+      const filter = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {};
+      const totalUsers     = await User.countDocuments(filter);
+      const totalFamilies  = await User.countDocuments({ ...filter, userType: "Family" });
+      const totalProviders = await User.countDocuments({ ...filter, userType: "ServiceProvider" });
+      const activeUsers    = await User.countDocuments({ ...filter, status: "Active" });
+      const pendingUsers   = await User.countDocuments({ ...filter, status: "Pending" });
+
+      report = {
+        title: "User Growth Report",
+        summary: [
+          { label: "Total Users",       value: totalUsers },
+          { label: "Families",          value: totalFamilies },
+          { label: "Service Providers", value: totalProviders },
+          { label: "Active Users",      value: activeUsers },
+          { label: "Pending Users",     value: pendingUsers },
+        ],
+      };
+    }
+
+    else if (reportType === "Service Summary Report") {
+      const filter = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {};
+      const total     = await Service.countDocuments(filter);
+      const active    = await Service.countDocuments({ ...filter, status: "Active" });
+      const completed = await Service.countDocuments({ ...filter, status: "Completed" });
+      const issues    = await Service.countDocuments({ ...filter, status: "Issue Reported" });
+      const cancelled = await Service.countDocuments({ ...filter, status: "Cancelled" });
+
+      // Count by service type
+      const elderCare    = await Service.countDocuments({ ...filter, serviceType: "Elder Care" });
+      const childCare    = await Service.countDocuments({ ...filter, serviceType: "Child Care" });
+      const homeCare     = await Service.countDocuments({ ...filter, serviceType: "Home Patient Care" });
+      const hospitalCare = await Service.countDocuments({ ...filter, serviceType: "Hospital Patient Care" });
+
+      report = {
+        title: "Service Summary Report",
+        summary: [
+          { label: "Total Services",        value: total },
+          { label: "Active",                value: active },
+          { label: "Completed",             value: completed },
+          { label: "Issues Reported",       value: issues },
+          { label: "Cancelled",             value: cancelled },
+          { label: "Elder Care",            value: elderCare },
+          { label: "Child Care",            value: childCare },
+          { label: "Home Patient Care",     value: homeCare },
+          { label: "Hospital Patient Care", value: hospitalCare },
+        ],
+      };
+    }
+
+    else if (reportType === "Revenue Report") {
+      const filter = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {};
+      const services = await Service.find({ ...filter, isPaid: true });
+      const totalRevenue   = services.reduce((sum, s) => sum + s.amount, 0);
+      const commission     = totalRevenue * 0.10;
+      const providerPayout = totalRevenue - commission;
+      const paidServices   = services.length;
+      const unpaidServices = await Service.countDocuments({ ...filter, isPaid: false });
+
+      report = {
+        title: "Revenue Report",
+        summary: [
+          { label: "Total Revenue",     value: `Rs. ${totalRevenue.toLocaleString()}` },
+          { label: "Platform Commission (10%)", value: `Rs. ${commission.toLocaleString()}` },
+          { label: "Provider Payouts",  value: `Rs. ${providerPayout.toLocaleString()}` },
+          { label: "Paid Services",     value: paidServices },
+          { label: "Unpaid Services",   value: unpaidServices },
+        ],
+      };
+    }
+
+    else if (reportType === "Provider Performance Report") {
+      const filter = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {};
+      const totalProviders  = await User.countDocuments({ userType: "ServiceProvider" });
+      const activeProviders = await User.countDocuments({ userType: "ServiceProvider", status: "Active" });
+      const pendingProviders = await User.countDocuments({ userType: "ServiceProvider", status: "Pending" });
+      const completedServices = await Service.countDocuments({ ...filter, status: "Completed" });
+      const issueServices     = await Service.countDocuments({ ...filter, status: "Issue Reported" });
+
+      report = {
+        title: "Provider Performance Report",
+        summary: [
+          { label: "Total Providers",      value: totalProviders },
+          { label: "Active Providers",     value: activeProviders },
+          { label: "Pending Verification", value: pendingProviders },
+          { label: "Completed Services",   value: completedServices },
+          { label: "Issues Reported",      value: issueServices },
+        ],
+      };
+    }
+
+    res.status(200).json({ success: true, report });
+  } catch (error) {
+    console.error("Generate report error:", error);
     res.status(500).json({ success: false, message: "Server error. Please try again." });
   }
 };
