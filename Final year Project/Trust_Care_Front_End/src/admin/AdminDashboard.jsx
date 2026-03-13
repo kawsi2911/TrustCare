@@ -553,58 +553,112 @@ const ReportsTab = () => {
 };
 
 // ─── FINANCE TAB ─────────────────────────────────────────────────────────────
-const FinanceTab = () => (
-  <div className="admin-content">
-    <div className="finance-stats">
-      <div className="stat-card stat-blue">
-        <div className="stat-number" style={{ fontSize: "1.8rem" }}>Rs. 8.75M</div>
-        <div className="stat-label">Total Revenue (MTD)</div>
-      </div>
-      <div className="stat-card stat-green">
-        <div className="stat-number" style={{ fontSize: "1.8rem" }}>Rs. 875K</div>
-        <div className="stat-label">Platform Commission</div>
-      </div>
-      <div className="stat-card stat-red">
-        <div className="stat-number" style={{ fontSize: "1.8rem" }}>Rs. 7.88M</div>
-        <div className="stat-label">Provider Payouts</div>
-      </div>
-    </div>
+const FinanceTab = () => {
+  const [finance, setFinance] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    <div className="transactions-card">
-      <h4>💳 Recent Transactions</h4>
-      <div className="transaction-item">
-        <p className="t-amount">Service #1234 – Rs. 75,000</p>
-        <p>Zarah Mehar → Ms. Minosh</p>
-        <p>Platform Fee: Rs. 7,500</p>
-        <p className="t-time">2 hours ago</p>
-      </div>
-      <div className="transaction-item">
-        <p className="t-amount">Service #1233 – Rs. 49,000</p>
-        <p>Mr. Karthic Gopair → Ravi Kumar</p>
-        <p>Platform Fee: Rs. 4,900</p>
-        <p className="t-time">6 hours ago</p>
-      </div>
-    </div>
+  useState(() => {
+    const fetchFinance = async () => {
+      try {
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch("http://localhost:5000/api/admin/finance", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) setFinance(data.finance);
+      } catch (err) {
+        console.error("Failed to fetch finance:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFinance();
+  }, []);
 
-    <div className="comparison-card">
-      <h4>📊 Monthly Comparison</h4>
-      <div className="comparison-item">
-        <span>January 2026:</span>
-        <span>Rs. 8,750,000 (+23%)</span>
-      </div>
-      <div className="comparison-item">
-        <span>December 2025:</span>
-        <span>Rs. 7,110,000</span>
-      </div>
-      <div className="comparison-item">
-        <span>November 2025:</span>
-        <span>Rs. 6,450,000</span>
-      </div>
-    </div>
+  const getTimeAgo = (date) => {
+    const diff = Math.floor((new Date() - new Date(date)) / 1000 / 60);
+    if (diff < 60) return `${diff} minutes ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+    return `${Math.floor(diff / 1440)} days ago`;
+  };
 
-    <button className="generate-btn">View Detailed Report</button>
-  </div>
-);
+  const formatAmount = (amount) => {
+    if (amount >= 1000000) return `Rs. ${(amount / 1000000).toFixed(2)}M`;
+    if (amount >= 1000) return `Rs. ${(amount / 1000).toFixed(1)}K`;
+    return `Rs. ${amount.toLocaleString()}`;
+  };
+
+  if (loading) return (
+    <div style={{ textAlign: "center", padding: "60px", color: "#999" }}>
+      Loading finance data...
+    </div>
+  );
+
+  return (
+    <div className="admin-content">
+      <div className="finance-stats">
+        <div className="stat-card stat-blue">
+          <div className="stat-number" style={{ fontSize: "1.8rem" }}>
+            {finance ? formatAmount(finance.totalRevenue) : "Rs. 0"}
+          </div>
+          <div className="stat-label">Total Revenue</div>
+        </div>
+        <div className="stat-card stat-green">
+          <div className="stat-number" style={{ fontSize: "1.8rem" }}>
+            {finance ? formatAmount(finance.commission) : "Rs. 0"}
+          </div>
+          <div className="stat-label">Platform Commission (10%)</div>
+        </div>
+        <div className="stat-card stat-red">
+          <div className="stat-number" style={{ fontSize: "1.8rem" }}>
+            {finance ? formatAmount(finance.providerPayout) : "Rs. 0"}
+          </div>
+          <div className="stat-label">Provider Payouts</div>
+        </div>
+      </div>
+
+      <div className="transactions-card">
+        <h4>💳 Recent Transactions</h4>
+        {finance && finance.recentTransactions.length > 0 ? (
+          finance.recentTransactions.map((service, idx) => (
+            <div className="transaction-item" key={idx}>
+              <p className="t-amount">{service.serviceNumber} – Rs. {service.amount.toLocaleString()}</p>
+              <p>{service.client.name} → {service.provider.name}</p>
+              <p>Platform Fee: Rs. {(service.amount * 0.10).toLocaleString()}</p>
+              <p className="t-time">{getTimeAgo(service.createdAt)}</p>
+            </div>
+          ))
+        ) : (
+          <div style={{ textAlign: "center", padding: "20px", color: "#999" }}>
+            No transactions yet.
+          </div>
+        )}
+      </div>
+
+      <div className="comparison-card">
+        <h4>📊 Monthly Comparison</h4>
+        <div className="comparison-item">
+          <span>This Month:</span>
+          <span><strong>Rs. {finance ? finance.monthlyRevenue.toLocaleString() : 0}</strong></span>
+        </div>
+        <div className="comparison-item">
+          <span>Last Month:</span>
+          <span><strong>Rs. {finance ? finance.lastMonthRevenue.toLocaleString() : 0}</strong></span>
+        </div>
+        <div className="comparison-item">
+          <span>Growth:</span>
+          <span className="growth-text">
+            {finance && finance.lastMonthRevenue > 0
+              ? `${(((finance.monthlyRevenue - finance.lastMonthRevenue) / finance.lastMonthRevenue) * 100).toFixed(1)}%`
+              : "N/A"}
+          </span>
+        </div>
+      </div>
+
+      <button className="generate-btn">View Detailed Report</button>
+    </div>
+  );
+};
 
 // ─── SETTINGS TAB ────────────────────────────────────────────────────────────
 const SettingsTab = () => {
@@ -614,11 +668,72 @@ const SettingsTab = () => {
   const [commission, setCommission] = useState("10");
   const [serviceFee, setServiceFee] = useState("500");
   const [notifications, setNotifications] = useState({
-    email: true,
-    sms: true,
-    push: true,
-    daily: false,
+    email: true, sms: true, push: true, daily: false,
   });
+  const [msg, setMsg] = useState({ general: "", fees: "", notif: "" });
+
+  const token = localStorage.getItem("adminToken");
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+  // Load settings on mount
+  useState(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/settings", { headers });
+        const data = await res.json();
+        if (data.success) {
+          const s = data.settings;
+          setPlatformName(s.platformName);
+          setSupportEmail(s.supportEmail);
+          setSupportPhone(s.supportPhone);
+          setCommission(String(s.commission));
+          setServiceFee(String(s.serviceFee));
+          setNotifications(s.notifications);
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const showMsg = (type, text) => {
+    setMsg((prev) => ({ ...prev, [type]: text }));
+    setTimeout(() => setMsg((prev) => ({ ...prev, [type]: "" })), 3000);
+  };
+
+  const saveGeneral = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/settings/general", {
+        method: "PUT", headers,
+        body: JSON.stringify({ platformName, supportEmail, supportPhone }),
+      });
+      const data = await res.json();
+      showMsg("general", data.success ? "✅ Saved!" : "❌ Failed");
+    } catch { showMsg("general", "❌ Error saving"); }
+  };
+
+  const saveFees = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/settings/fees", {
+        method: "PUT", headers,
+        body: JSON.stringify({ commission, serviceFee }),
+      });
+      const data = await res.json();
+      showMsg("fees", data.success ? "✅ Updated!" : "❌ Failed");
+    } catch { showMsg("fees", "❌ Error saving"); }
+  };
+
+  const saveNotifications = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/settings/notifications", {
+        method: "PUT", headers,
+        body: JSON.stringify(notifications),
+      });
+      const data = await res.json();
+      showMsg("notif", data.success ? "✅ Saved!" : "❌ Failed");
+    } catch { showMsg("notif", "❌ Error saving"); }
+  };
 
   const toggleNotification = (key) =>
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -629,44 +744,24 @@ const SettingsTab = () => {
       <div className="settings-section">
         <h4>⚙️ General Settings</h4>
         <label className="form-label">Platform Name</label>
-        <input
-          className="form-input"
-          value={platformName}
-          onChange={(e) => setPlatformName(e.target.value)}
-        />
+        <input className="form-input" value={platformName} onChange={(e) => setPlatformName(e.target.value)} />
         <label className="form-label">Support Email</label>
-        <input
-          className="form-input"
-          value={supportEmail}
-          onChange={(e) => setSupportEmail(e.target.value)}
-        />
+        <input className="form-input" value={supportEmail} onChange={(e) => setSupportEmail(e.target.value)} />
         <label className="form-label">Support Phone</label>
-        <input
-          className="form-input"
-          value={supportPhone}
-          onChange={(e) => setSupportPhone(e.target.value)}
-        />
-        <button className="save-btn">Save Changes</button>
+        <input className="form-input" value={supportPhone} onChange={(e) => setSupportPhone(e.target.value)} />
+        {msg.general && <p style={{ color: "#4caf50", marginBottom: "8px", fontWeight: 600 }}>{msg.general}</p>}
+        <button className="save-btn" onClick={saveGeneral}>Save Changes</button>
       </div>
 
       {/* Commission & Fees */}
       <div className="settings-section">
         <h4>💰 Commission & Fees</h4>
         <label className="form-label">Platform Commission (%)</label>
-        <input
-          className="form-input"
-          placeholder="e.g. 10"
-          value={commission}
-          onChange={(e) => setCommission(e.target.value)}
-        />
+        <input className="form-input" placeholder="e.g. 10" value={commission} onChange={(e) => setCommission(e.target.value)} />
         <label className="form-label">Service Fee (Rs.)</label>
-        <input
-          className="form-input"
-          placeholder="500"
-          value={serviceFee}
-          onChange={(e) => setServiceFee(e.target.value)}
-        />
-        <button className="save-btn">Update Fees</button>
+        <input className="form-input" placeholder="500" value={serviceFee} onChange={(e) => setServiceFee(e.target.value)} />
+        {msg.fees && <p style={{ color: "#4caf50", marginBottom: "8px", fontWeight: 600 }}>{msg.fees}</p>}
+        <button className="save-btn" onClick={saveFees}>Update Fees</button>
       </div>
 
       {/* Notification Settings */}
@@ -688,7 +783,8 @@ const SettingsTab = () => {
             <label htmlFor={key}>{label}</label>
           </div>
         ))}
-        <button className="save-btn">Save Settings</button>
+        {msg.notif && <p style={{ color: "#4caf50", marginBottom: "8px", fontWeight: 600 }}>{msg.notif}</p>}
+        <button className="save-btn" onClick={saveNotifications}>Save Settings</button>
       </div>
     </div>
   );

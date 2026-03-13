@@ -1,6 +1,7 @@
 import Admin from "../models/adminModel.js";
 import User from "../models/userModel.js";
 import Service from "../models/serviceModel.js";
+import Settings from "../models/settingsModel.js";
 import jwt from "jsonwebtoken";
 
 // ── Verify Token (middleware) ────────────────────────────────────────────────
@@ -374,6 +375,124 @@ export const generateReport = async (req, res) => {
     res.status(200).json({ success: true, report });
   } catch (error) {
     console.error("Generate report error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Get Finance Stats ─────────────────────────────────────────────────────────
+export const getFinanceStats = async (req, res) => {
+  try {
+    // All paid services
+    const paidServices     = await Service.find({ isPaid: true });
+    const totalRevenue     = paidServices.reduce((sum, s) => sum + s.amount, 0);
+    const commission       = totalRevenue * 0.10;
+    const providerPayout   = totalRevenue - commission;
+
+    // This month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyPaid  = await Service.find({ isPaid: true, createdAt: { $gte: startOfMonth } });
+    const monthlyRevenue = monthlyPaid.reduce((sum, s) => sum + s.amount, 0);
+
+    // Last month
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth   = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lastMonthPaid    = await Service.find({
+      isPaid: true,
+      createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+    });
+    const lastMonthRevenue = lastMonthPaid.reduce((sum, s) => sum + s.amount, 0);
+
+    // Recent transactions (last 5 paid services)
+    const recentTransactions = await Service.find({ isPaid: true })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.status(200).json({
+      success: true,
+      finance: {
+        totalRevenue,
+        commission,
+        providerPayout,
+        monthlyRevenue,
+        lastMonthRevenue,
+        recentTransactions,
+      },
+    });
+  } catch (error) {
+    console.error("Finance stats error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Get Settings ──────────────────────────────────────────────────────────────
+export const getSettings = async (req, res) => {
+  try {
+    // Get existing or create default settings
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    res.status(200).json({ success: true, settings });
+  } catch (error) {
+    console.error("Get settings error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Update General Settings ───────────────────────────────────────────────────
+export const updateGeneralSettings = async (req, res) => {
+  try {
+    const { platformName, supportEmail, supportPhone } = req.body;
+    let settings = await Settings.findOne();
+    if (!settings) settings = new Settings({});
+
+    if (platformName) settings.platformName = platformName;
+    if (supportEmail) settings.supportEmail = supportEmail;
+    if (supportPhone) settings.supportPhone = supportPhone;
+    settings.updatedAt = new Date();
+    await settings.save();
+
+    res.status(200).json({ success: true, message: "General settings saved!", settings });
+  } catch (error) {
+    console.error("Update general settings error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Update Fee Settings ───────────────────────────────────────────────────────
+export const updateFeeSettings = async (req, res) => {
+  try {
+    const { commission, serviceFee } = req.body;
+    let settings = await Settings.findOne();
+    if (!settings) settings = new Settings({});
+
+    if (commission !== undefined) settings.commission = Number(commission);
+    if (serviceFee !== undefined) settings.serviceFee = Number(serviceFee);
+    settings.updatedAt = new Date();
+    await settings.save();
+
+    res.status(200).json({ success: true, message: "Fee settings updated!", settings });
+  } catch (error) {
+    console.error("Update fee settings error:", error);
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
+  }
+};
+
+// ── Update Notification Settings ──────────────────────────────────────────────
+export const updateNotificationSettings = async (req, res) => {
+  try {
+    const { email, sms, push, daily } = req.body;
+    let settings = await Settings.findOne();
+    if (!settings) settings = new Settings({});
+
+    settings.notifications = { email, sms, push, daily };
+    settings.updatedAt = new Date();
+    await settings.save();
+
+    res.status(200).json({ success: true, message: "Notification settings saved!", settings });
+  } catch (error) {
+    console.error("Update notification settings error:", error);
     res.status(500).json({ success: false, message: "Server error. Please try again." });
   }
 };
